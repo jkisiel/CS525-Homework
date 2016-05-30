@@ -6,6 +6,8 @@
 #include "storage_mgr.h"
 #include "dberror.h"
 
+
+/* Use global FILE variable? */
 extern void initStorageManager(void)    {
     //TODO
 }
@@ -50,8 +52,8 @@ extern RC openPageFile (char *fileName, SM_FileHandle *fHandle) {
 
     fHandle->totalNumPages = (int) (ftell(fil) / PAGE_SIZE);
     fHandle->curPagePos = 0;
+    fHandle->mgmtInfo = fil;
 
-    fclose(fil)
     return RC_OK;
 }
 
@@ -60,6 +62,11 @@ extern RC openPageFile (char *fileName, SM_FileHandle *fHandle) {
  * what it should be
  */
 extern RC closePageFile (SM_FileHandle *fHandle)    {
+    if(fHandle == NULL) return RC_FILE_HANDLE_NOT_INIT;
+
+    FILE *fil = (FILE *) fHandle->mgmtInfo;
+    fclose(fil);
+
     free(fHandle->fileName);
     free(fHandle);
 
@@ -67,7 +74,8 @@ extern RC closePageFile (SM_FileHandle *fHandle)    {
 }
 
 extern RC destroyPageFile (char *fileName)  {
-    //TODO
+    remove(fileName);
+    return RC_OK;
 }
 
 /* reading blocks from disc */
