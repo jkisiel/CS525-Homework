@@ -79,15 +79,48 @@ extern RC destroyPageFile (char *fileName)  {
 }
 
 /* reading blocks from disc */
-/*
-extern RC readBlock (int pageNum, SM_FileHandle *fHandle, SM_PageHandle memPage);
-extern int getBlockPos (SM_FileHandle *fHandle);
-extern RC readFirstBlock (SM_FileHandle *fHandle, SM_PageHandle memPage);
-extern RC readPreviousBlock (SM_FileHandle *fHandle, SM_PageHandle memPage);
-extern RC readCurrentBlock (SM_FileHandle *fHandle, SM_PageHandle memPage);
-extern RC readNextBlock (SM_FileHandle *fHandle, SM_PageHandle memPage);
-extern RC readLastBlock (SM_FileHandle *fHandle, SM_PageHandle memPage);
-*/
+/* ALL OF THESE METHODS NEED ERROR CHECKING!
+ * Most of the checking should be in readBlock
+ * to avoid redundancy.
+ */
+
+extern RC readBlock (int pageNum,
+                    SM_FileHandle *fHandle, SM_PageHandle memPage)    {
+    FILE *fil = (FILE *) fHandle->mgmtInfo;
+    fseek(fil,  pageNum*PAGE_SIZE, SEEK_SET);
+
+    fread(memPage, 1, PAGE_SIZE, fil);
+
+    return RC_OK;
+}
+
+extern int getBlockPos (SM_FileHandle *fHandle) {
+    FILE *fil = (FILE *) fHandle->mgmtInfo;
+    return fil->curPagePos;
+}
+
+extern RC readFirstBlock (SM_FileHandle *fHandle, SM_PageHandle memPage)    {
+    return readBlock(0, fHandle, memPage);
+}
+
+extern RC readPreviousBlock (SM_FileHandle *fHandle, SM_PageHandle memPage) {
+    fHandle->curPagePos -= 1;
+    return readBlock(fHandle->curPagePos, fHandle, memPage);
+}
+
+extern RC readCurrentBlock (SM_FileHandle *fHandle, SM_PageHandle memPage)  {
+    return readBlock(fHandle->curPagePos, fHandle, memPage);
+}
+
+extern RC readNextBlock (SM_FileHandle *fHandle, SM_PageHandle memPage) {
+    fHandle->curPagePos += 1;
+    return readBlock
+}
+
+extern RC readLastBlock (SM_FileHandle *fHandle, SM_PageHandle memPage) {
+    return readBlock(fHandle->totalNumPages - 1, fHandle, memPage);
+}
+
 /* writing blocks to a page file */
 /*
 extern RC writeBlock (int pageNum, SM_FileHandle *fHandle, SM_PageHandle memPage);
