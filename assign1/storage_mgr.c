@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
@@ -35,7 +36,7 @@ extern RC createPageFile(char *fileName)   {
 
 extern RC openPageFile (char *fileName, SM_FileHandle *fHandle) {
     FILE *fil;
-    fil = fopen(filename, "r");
+    fil = fopen(fileName, "r");
     if(fil == NULL) return RC_FILE_NOT_FOUND;
 
     // Create a SM_FileHandle in the heap
@@ -45,7 +46,7 @@ extern RC openPageFile (char *fileName, SM_FileHandle *fHandle) {
     // Copy the fileName into the heap
     // to preserve it independent of the scope
     // of the fileName parameter
-    fHandle->filename = (char *) malloc(sizeof(char)*strlen(fileName) + 1);
+    fHandle->fileName = (char *) malloc(sizeof(char)*strlen(fileName) + 1);
     strcpy(fHandle->fileName, fileName);
 
     fseek(fil, 0, SEEK_END);
@@ -95,8 +96,8 @@ extern RC readBlock (int pageNum,
 }
 
 extern int getBlockPos (SM_FileHandle *fHandle) {
-    FILE *fil = (FILE *) fHandle->mgmtInfo;
-    return fil->curPagePos;
+//    FILE *fil = (FILE *) fHandle->mgmtInfo;
+    return fHandle->curPagePos;
 }
 
 extern RC readFirstBlock (SM_FileHandle *fHandle, SM_PageHandle memPage)    {
@@ -114,7 +115,7 @@ extern RC readCurrentBlock (SM_FileHandle *fHandle, SM_PageHandle memPage)  {
 
 extern RC readNextBlock (SM_FileHandle *fHandle, SM_PageHandle memPage) {
     fHandle->curPagePos += 1;
-    return readBlock
+    return readBlock(fHandle->curPagePos, fHandle, memPage);
 }
 
 extern RC readLastBlock (SM_FileHandle *fHandle, SM_PageHandle memPage) {

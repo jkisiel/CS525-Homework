@@ -15,3 +15,5 @@ RC RC_WRITE_OUT_OF_BOUND_INDEX = 7;
 
 void printError(RC error);
 void char *errorMessage(RC error);
+
+#endif
