@@ -55,19 +55,19 @@ extern RC openPageFile (char *fileName, SM_FileHandle *fHandle) {
     return RC_OK;
 }
 
-extern RC closePageFile (SM_FileHandle *fHandle)    {
-    // TODO
-}
-
 /* frees the memory allocated by openPageFile
  * not safe, can break if fHandle is not
  * what it should be
  */
-extern RC destroyPageFile (char *fileName)  {
+extern RC closePageFile (SM_FileHandle *fHandle)    {
     free(fHandle->fileName);
     free(fHandle);
 
     return RC_OK;
+}
+
+extern RC destroyPageFile (char *fileName)  {
+    //TODO
 }
 
 /* reading blocks from disc */
