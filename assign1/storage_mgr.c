@@ -112,15 +112,22 @@ extern RC destroyPageFile (char *fileName)  {
  * to avoid redundancy.
  */
 
-extern RC readBlock (int pageNum,
-                    SM_FileHandle *fHandle,
-                    SM_PageHandle memPage)    {
-
+extern RC checkHandle(SM_FileHandle *fHandle)   {
     if(fHandle == NULL) return RC_FILE_HANDLE_NOT_INIT;
     FILE *fil = (FILE *) fHandle->mgmtInfo;
     if(fil == NULL) return RC_FILE_NOT_FOUND;
 
-    fseek(fil, pageNum*PAGE_SIZE, SEEK_SET);
+    return RC_OK;
+}
+
+extern RC readBlock (int pageNum,
+                    SM_FileHandle *fHandle,
+                    SM_PageHandle memPage)    {
+
+    check_RC = RC_OK;
+    if(check_RC = checkHandle(fHandle) != RC_OK)   return check_RC;
+
+    if(fseek(fil, pageNum*PAGE_SIZE, SEEK_SET) != 0) return RC_READ_ERROR;
 
     /* update error message to specify how many blocks
      * were read before a read error occured */
@@ -135,33 +142,86 @@ extern RC readBlock (int pageNum,
 extern int getBlockPos (SM_FileHandle *fHandle) {
 //    FILE *fil = (FILE *) fHandle->mgmtInfo;
 //    if(fHandle == NULL) return RC_FILE_HANDLE_NOT_INIT;
+
+    check_RC = RC_OK;
+    /* if fHandle is undefined, there is no curPagePos
+     * returning an RC type would clash with
+     * expected, correct return types */
+    if(check_RC = checkHandle(fHandle) != RC_OK)   return -1;
+   
     return fHandle->curPagePos;
 }
 
 extern RC readFirstBlock(   SM_FileHandle *fHandle,
                             SM_PageHandle memPage)    {
+    check_RC = RC_OK;
+    if(check_RC = checkHandle(fHandle) != RC_OK)    return check_RC;
+
+    /* Check that page 0 exists */
+    if(fHandle->totalNumPages < 1)  return RC_READ_NON_EXISTING_PAGE;
+
     return readBlock(0, fHandle, memPage);
 }
 
 extern RC readPreviousBlock(SM_FileHandle *fHandle,
                             SM_PageHandle memPage) {
+    check_RC = RC_OK;
+    if(check_RC = checkHandle(fHandle) != RC_OK)    return check_RC;
+
+    /* Check that curPagePos isn't the first block
+     * and is otherwise valid.
+     * Though technically the previous block can be read
+     * if curPagePos == totalNumPages, an error is
+     * returned instead because this should not be the case. */
+    if( fHandle->curPagePos < 1
+        ||
+        fHandle->curPagePos >=
+            fHandle->totalNumPages) return RC_READ_NON_EXISTING_PAGE;
+
     fHandle->curPagePos -= 1;
     return readBlock(fHandle->curPagePos, fHandle, memPage);
 }
 
 extern RC readCurrentBlock( SM_FileHandle *fHandle,
                             SM_PageHandle memPage)  {
+    check_RC = RC_OK;
+    if(check_RC = checkHandle(fHandle) != RC_OK)    return check_RC;
+
+    /* Check that the curPagePos is valid */
+    if( fHandle->curPagePos < 0
+        ||
+        fHandle->curPagePos >=
+           fHandle->totalNumPages) return RC_READ_NON_EXISTING_PAGE;
+
     return readBlock(fHandle->curPagePos, fHandle, memPage);
 }
 
 extern RC readNextBlock(SM_FileHandle *fHandle,
                         SM_PageHandle memPage) {
+    check_RC = RC_OK;
+    if(check_RC = checkHandle(fHandle) != RC_OK)    return check_RC;
+
+    /* Checks if next page will fall off end of file.
+     * Also makes sure curPagePos is at least 0,
+     * even though technically the next block if curPagePos == -1
+     * is 0, curPagePos should not be -1. */
+    if( fHandle->curPagePos < 0
+        ||
+        fHandle->curPagePos + 1 >=
+            fHandle->totalNumPages) return RC_READ_NON_EXISTING_PAGE;
+
     fHandle->curPagePos += 1;
+
     return readBlock(fHandle->curPagePos, fHandle, memPage);
 }
 
 extern RC readLastBlock(SM_FileHandle *fHandle,
                         SM_PageHandle memPage) {
+    check_RC = RC_OK;
+    if(check_RC = checkHandle(fHandle) != RC_OK)    return check_RC;
+
+    if(fHandle->totalNumPages < 0)  return RC_READ_NON_EXISTING_PAGE;
+
     return readBlock(fHandle->totalNumPages - 1, fHandle, memPage);
 }
 

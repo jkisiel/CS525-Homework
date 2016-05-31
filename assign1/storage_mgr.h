@@ -40,4 +40,7 @@ extern RC writeCurrentBlock (SM_FileHandle *fHandle, SM_PageHandle memPage);
 extern RC appendEmptyBlock (SM_FileHandle *fHandle);
 extern RC ensureCapacity (int numberOfPages, SM_FileHandle *fHandle);
 
+/* helper functions */
+extern RC checkHandle(SM_FileHandle *fHandle);
+
 #endif
