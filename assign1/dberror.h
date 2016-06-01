@@ -16,8 +16,8 @@ RC RC_FILE_CLOSE_ERROR = 8;
 RC RC_MALLOC_FAILED = 9;
 RC RC_FILE_REMOVE_FAILED = 10;
 
-void char *RC_message;
+extern char *RC_message;
 
-void printError(RC error);
+extern void printError(RC error);
 
 #endif

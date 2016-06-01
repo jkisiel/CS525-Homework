@@ -230,8 +230,11 @@ extern RC readLastBlock(SM_FileHandle *fHandle,
 extern RC writeBlock(   int pageNum,
                         SM_FileHandle *fHandle,
                         SM_PageHandle memPage)  {
+    check_RC = RC_OK;
+    if(check_RC = checkHandle(fHandle) != RC_OK)    return check_RC;
+
     FILE *fil = (FILE *) fHandle->mgmtInfo;
-    fseek(fil, pageNum*PAGE_SIZE, SEEK_SET);
+    if(fseek(fil, pageNum*PAGE_SIZE, SEEK_SET) != 0) return RC_READ_ERROR;
 
     bytes_wrote = 0;
     if(bytes_wrote = fwrite(memPage, PAGE_SIZE, 1, fil) < PAGE_SIZE)    {
@@ -243,19 +246,42 @@ extern RC writeBlock(   int pageNum,
 
 extern RC writeCurrentBlock(SM_FileHandle *fHandle,
                             SM_PageHandle memPage)  {
+    check_RC = RC_OK;
+    if(check_RC = checkHandle(fHandle) != RC_OK)    return check_RC;
+
+    if( fHandle->curPagePos < 0
+        ||
+        fHandle->curPagePos >=
+            fHandle->totalNumPages) return RC_WRITE_OUT_OF_BOUNDS_INDEX;
+
     return writeBlock(fHandle->curPagePos, fHandle, memPage);
 }
 
 extern RC appendEmptyBlock (SM_FileHandle *fHandle) {
-    return writeBlock(fHandle->totalNumPages, fHandle, NULL0);
+    check_RC = RC_OK;
+    if(check_RC = checkHandle(fHandle) != RC_OK)    return check_RC;
+
+    /* Checks that there aren't negative page numbers
+     * otherwise page numbers will not be accurate */
+    if(fHandle->totalNumPages < 0)  return RC_WRITE_OUT_OF_BOUNDS_INDEX;
+
+    /* Confirm the write was successful before
+     * incrementing totalNumPages */
+    rc_write = RC_OK;
+    if(rc_write = writeBlock(fHandle->totalNumPages + 1,
+                            fHandle,
+                            NULL0) != RC_OK) return rc_write;
+    else fHandle->totalNumPages++;
+
+    return RC_OK;
 }
 
 extern RC ensureCapacity(   int numberOfPages,
                             SM_FileHandle *fHandle)    {
+    check_RC = RC_OK;
+    if(check_RC = checkHandle(fHandle) != RC_OK)    return check_RC;
 
-    if(fHandle == NULL) return RC_FILE_HANDLE_NOT_INIT;
     while(fHandle->totalNumPages < numberOfPages)   {
         appendEmptyBlock(fHandle);
-        fHandle->totalNumPages++;
     }
 }
