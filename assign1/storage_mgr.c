@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
+#include <unistd.h>
 #include <sys/stat.h>
 
 #include "storage_mgr.h"
@@ -30,8 +31,12 @@ extern void closeStorageManager(void)   {
  */
 extern RC createPageFile(char *fileName)   {
     FILE *fil;
-//    uint16_t pos = 0;
+    uint16_t pos = 0;
 //    char null0;
+
+    if(access(fileName, F_OK) != -1)    {
+        if(remove(fileName) != 0)   return RC_FILE_REMOVE_FAILED;
+    }
 
     fil = fopen(fileName, "w+");
 
@@ -42,11 +47,12 @@ extern RC createPageFile(char *fileName)   {
         return RC_WRITE_FAILED;
     }
 
-//    null0 = '\0';
+//    char null0 = '\0';
 //    while(pos < PAGE_SIZE)  {
-//        fwrite(null0, sizeof(char), 1, fil);
+//        fwrite(&null0, sizeof(char), 1, fil);
 //        pos++;
 //    }
+    if(fflush(fil) != 0)    return RC_WRITE_FAILED;
     if(fclose(fil) != 0)    return RC_FILE_CLOSE_ERROR;
 
     return RC_OK;
@@ -54,14 +60,21 @@ extern RC createPageFile(char *fileName)   {
 
 extern RC openPageFile (char *fileName, SM_FileHandle *fHandle) {
     FILE *fil;
-    fil = fopen(fileName, "w");
+    if(access(fileName, F_OK) != 0)    {
+        return RC_FILE_NOT_FOUND;
+    }
+
+    if(fHandle == NULL) return RC_FILE_HANDLE_NOT_INIT;
+
+    fil = fopen(fileName, "rw");
     if(fil == NULL) return RC_FILE_NOT_FOUND;
 
     // Create a SM_FileHandle in the heap
-    fHandle =   (struct SM_FileHandle *)
-                malloc(sizeof(struct SM_FileHandle));
+    // NO NOT DO THIS!
+//    fHandle =   (struct SM_FileHandle *)
+//                malloc(sizeof(struct SM_FileHandle));
 
-    if(fHandle == NULL) return RC_MALLOC_FAILED;
+//    if(fHandle == NULL) return RC_MALLOC_FAILED;
 
     // Copy the fileName into the heap
     // to preserve it independent of the scope
@@ -70,6 +83,7 @@ extern RC openPageFile (char *fileName, SM_FileHandle *fHandle) {
     if(fHandle->fileName == NULL)   return RC_MALLOC_FAILED;
     strcpy(fHandle->fileName, fileName);
 
+    if(fseek(fil, SEEK_SET, 0) != 0)    return RC_READ_ERROR;
     if(fseek(fil, 0, SEEK_END) != 0)    return RC_READ_ERROR;
 
     fHandle->totalNumPages = (int) (ftell(fil) / PAGE_SIZE);
@@ -91,7 +105,7 @@ extern RC closePageFile (SM_FileHandle *fHandle)    {
     if(fclose(fil) != 0)    return RC_FILE_CLOSE_ERROR;
 
     free(fHandle->fileName);
-    free(fHandle);
+//    free(fHandle);
 
     return RC_OK;
 }
@@ -107,7 +121,8 @@ extern RC destroyPageFile (char *fileName)  {
 }
 
 /* reading blocks from disc */
-/* ALL OF THESE METHODS NEED ERROR CHECKING!
+
+/* 
  * Most of the checking should be in readBlock
  * to avoid redundancy.
  */
@@ -234,14 +249,22 @@ extern RC writeBlock(   int pageNum,
     RC check_RC = RC_OK;
     if(check_RC = checkHandle(fHandle) != RC_OK)    return check_RC;
 
-    FILE *fil = (FILE *) fHandle->mgmtInfo;
+    if( pageNum < 0
+        ||
+        pageNum >=
+            fHandle->totalNumPages)  return RC_WRITE_OUT_OF_BOUND_INDEX;
+
+//    FILE *fil = (FILE *) fHandle->mgmtInfo;
+    FILE *fil = fopen(fHandle->fileName, "w");
+    if(fil == NULL) return RC_FILE_NOT_FOUND;
     if(fseek(fil, pageNum*PAGE_SIZE, SEEK_SET) != 0) return RC_READ_ERROR;
 
     int bytes_wrote = 0;
-    if(bytes_wrote = fwrite(memPage, PAGE_SIZE, 1, fil) < PAGE_SIZE)    {
+    if(bytes_wrote = fwrite(memPage, 1, PAGE_SIZE, fil) != PAGE_SIZE)    {
         return RC_WRITE_FAILED;
     }
 
+    if(fclose(fil) != 0)    return RC_FILE_CLOSE_ERROR;
     return RC_OK;
 }
 
