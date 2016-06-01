@@ -66,7 +66,7 @@ extern RC openPageFile (char *fileName, SM_FileHandle *fHandle) {
 
     if(fHandle == NULL) return RC_FILE_HANDLE_NOT_INIT;
 
-    fil = fopen(fileName, "rw");
+    fil = fopen(fileName, "r+");
     if(fil == NULL) return RC_FILE_NOT_FOUND;
 
     // Create a SM_FileHandle in the heap
