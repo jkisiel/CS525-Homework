@@ -14,7 +14,7 @@ extern void initStorageManager(void)    {
     int i;
     NULL0 = (char *) malloc(PAGE_SIZE);
     for(i=0; i<PAGE_SIZE; i++)  {
-        NULL0[i] = '\0'
+        NULL0[i] = '\0';
     }
 }
 
@@ -37,7 +37,7 @@ extern RC createPageFile(char *fileName)   {
 
     if(fil == NULL) return RC_FILE_INIT_FAILED;
 
-    bytes_wrote = 0;
+    int bytes_wrote = 0;
     if(bytes_wrote = fwrite(NULL0, 1, PAGE_SIZE, fil) < PAGE_SIZE)  {
         return RC_WRITE_FAILED;
     }
@@ -124,14 +124,15 @@ extern RC readBlock (int pageNum,
                     SM_FileHandle *fHandle,
                     SM_PageHandle memPage)    {
 
-    check_RC = RC_OK;
+    RC check_RC = RC_OK;
     if(check_RC = checkHandle(fHandle) != RC_OK)   return check_RC;
 
+    FILE *fil = (FILE *) fHandle->mgmtInfo;
     if(fseek(fil, pageNum*PAGE_SIZE, SEEK_SET) != 0) return RC_READ_ERROR;
 
     /* update error message to specify how many blocks
      * were read before a read error occured */
-    bytes_read = 0;
+    int bytes_read = 0;
     if(bytes_read = fread(memPage, 1, PAGE_SIZE, fil) < PAGE_SIZE)  {
         return RC_READ_ERROR;
     }
@@ -143,7 +144,7 @@ extern int getBlockPos (SM_FileHandle *fHandle) {
 //    FILE *fil = (FILE *) fHandle->mgmtInfo;
 //    if(fHandle == NULL) return RC_FILE_HANDLE_NOT_INIT;
 
-    check_RC = RC_OK;
+    RC check_RC = RC_OK;
     /* if fHandle is undefined, there is no curPagePos
      * returning an RC type would clash with
      * expected, correct return types */
@@ -154,7 +155,7 @@ extern int getBlockPos (SM_FileHandle *fHandle) {
 
 extern RC readFirstBlock(   SM_FileHandle *fHandle,
                             SM_PageHandle memPage)    {
-    check_RC = RC_OK;
+    RC check_RC = RC_OK;
     if(check_RC = checkHandle(fHandle) != RC_OK)    return check_RC;
 
     /* Check that page 0 exists */
@@ -165,7 +166,7 @@ extern RC readFirstBlock(   SM_FileHandle *fHandle,
 
 extern RC readPreviousBlock(SM_FileHandle *fHandle,
                             SM_PageHandle memPage) {
-    check_RC = RC_OK;
+    RC check_RC = RC_OK;
     if(check_RC = checkHandle(fHandle) != RC_OK)    return check_RC;
 
     /* Check that curPagePos isn't the first block
@@ -184,7 +185,7 @@ extern RC readPreviousBlock(SM_FileHandle *fHandle,
 
 extern RC readCurrentBlock( SM_FileHandle *fHandle,
                             SM_PageHandle memPage)  {
-    check_RC = RC_OK;
+    RC check_RC = RC_OK;
     if(check_RC = checkHandle(fHandle) != RC_OK)    return check_RC;
 
     /* Check that the curPagePos is valid */
@@ -198,7 +199,7 @@ extern RC readCurrentBlock( SM_FileHandle *fHandle,
 
 extern RC readNextBlock(SM_FileHandle *fHandle,
                         SM_PageHandle memPage) {
-    check_RC = RC_OK;
+    RC check_RC = RC_OK;
     if(check_RC = checkHandle(fHandle) != RC_OK)    return check_RC;
 
     /* Checks if next page will fall off end of file.
@@ -217,7 +218,7 @@ extern RC readNextBlock(SM_FileHandle *fHandle,
 
 extern RC readLastBlock(SM_FileHandle *fHandle,
                         SM_PageHandle memPage) {
-    check_RC = RC_OK;
+    RC check_RC = RC_OK;
     if(check_RC = checkHandle(fHandle) != RC_OK)    return check_RC;
 
     if(fHandle->totalNumPages < 0)  return RC_READ_NON_EXISTING_PAGE;
@@ -230,13 +231,13 @@ extern RC readLastBlock(SM_FileHandle *fHandle,
 extern RC writeBlock(   int pageNum,
                         SM_FileHandle *fHandle,
                         SM_PageHandle memPage)  {
-    check_RC = RC_OK;
+    RC check_RC = RC_OK;
     if(check_RC = checkHandle(fHandle) != RC_OK)    return check_RC;
 
     FILE *fil = (FILE *) fHandle->mgmtInfo;
     if(fseek(fil, pageNum*PAGE_SIZE, SEEK_SET) != 0) return RC_READ_ERROR;
 
-    bytes_wrote = 0;
+    int bytes_wrote = 0;
     if(bytes_wrote = fwrite(memPage, PAGE_SIZE, 1, fil) < PAGE_SIZE)    {
         return RC_WRITE_FAILED;
     }
@@ -246,28 +247,28 @@ extern RC writeBlock(   int pageNum,
 
 extern RC writeCurrentBlock(SM_FileHandle *fHandle,
                             SM_PageHandle memPage)  {
-    check_RC = RC_OK;
+    RC check_RC = RC_OK;
     if(check_RC = checkHandle(fHandle) != RC_OK)    return check_RC;
 
     if( fHandle->curPagePos < 0
         ||
         fHandle->curPagePos >=
-            fHandle->totalNumPages) return RC_WRITE_OUT_OF_BOUNDS_INDEX;
+            fHandle->totalNumPages) return RC_WRITE_OUT_OF_BOUND_INDEX;
 
     return writeBlock(fHandle->curPagePos, fHandle, memPage);
 }
 
 extern RC appendEmptyBlock (SM_FileHandle *fHandle) {
-    check_RC = RC_OK;
+    RC check_RC = RC_OK;
     if(check_RC = checkHandle(fHandle) != RC_OK)    return check_RC;
 
     /* Checks that there aren't negative page numbers
      * otherwise page numbers will not be accurate */
-    if(fHandle->totalNumPages < 0)  return RC_WRITE_OUT_OF_BOUNDS_INDEX;
+    if(fHandle->totalNumPages < 0)  return RC_WRITE_OUT_OF_BOUND_INDEX;
 
     /* Confirm the write was successful before
      * incrementing totalNumPages */
-    rc_write = RC_OK;
+    RC rc_write = RC_OK;
     if(rc_write = writeBlock(fHandle->totalNumPages + 1,
                             fHandle,
                             NULL0) != RC_OK) return rc_write;
@@ -278,7 +279,7 @@ extern RC appendEmptyBlock (SM_FileHandle *fHandle) {
 
 extern RC ensureCapacity(   int numberOfPages,
                             SM_FileHandle *fHandle)    {
-    check_RC = RC_OK;
+    RC check_RC = RC_OK;
     if(check_RC = checkHandle(fHandle) != RC_OK)    return check_RC;
 
     while(fHandle->totalNumPages < numberOfPages)   {
